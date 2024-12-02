@@ -1,34 +1,27 @@
 "use strict";
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateMnemonic =
-  exports.generateMnemonic =
-  exports.entropyToMnemonic =
-  exports.mnemonicToEntropy =
-  exports.mnemonicToSeedHex =
-  exports.mnemonicToSeed =
-  exports.Wordlists =
-    void 0;
-const unorm_1 = __importDefault(require("unorm"));
-const react_native_quick_crypto_1 = __importDefault(
-  require("react-native-quick-crypto")
-);
-const react_native_buffer_1 = require("@craftzdog/react-native-buffer");
-const cs_json_1 = __importDefault(require("./wordlists/cs.json"));
-const en_json_1 = __importDefault(require("./wordlists/en.json"));
-const es_json_1 = __importDefault(require("./wordlists/es.json"));
-const fr_json_1 = __importDefault(require("./wordlists/fr.json"));
-const it_json_1 = __importDefault(require("./wordlists/it.json"));
-const ja_json_1 = __importDefault(require("./wordlists/ja.json"));
-const ko_json_1 = __importDefault(require("./wordlists/ko.json"));
-const pt_json_1 = __importDefault(require("./wordlists/pt.json"));
-const zh_json_1 = __importDefault(require("./wordlists/zh.json"));
-const { pbkdf2Sync, createHash, randomBytes } =
-  react_native_quick_crypto_1.default;
+exports.Wordlists = void 0;
+exports.mnemonicToSeed = mnemonicToSeed;
+exports.mnemonicToSeedHex = mnemonicToSeedHex;
+exports.mnemonicToEntropy = mnemonicToEntropy;
+exports.entropyToMnemonic = entropyToMnemonic;
+exports.generateMnemonic = generateMnemonic;
+exports.validateMnemonic = validateMnemonic;
+var unorm_1 = require("unorm");
+var react_native_quick_crypto_1 = require("react-native-quick-crypto");
+var react_native_buffer_1 = require("@craftzdog/react-native-buffer");
+var cs_json_1 = require("./wordlists/cs.json");
+var en_json_1 = require("./wordlists/en.json");
+var es_json_1 = require("./wordlists/es.json");
+var fr_json_1 = require("./wordlists/fr.json");
+var it_json_1 = require("./wordlists/it.json");
+var ja_json_1 = require("./wordlists/ja.json");
+var ko_json_1 = require("./wordlists/ko.json");
+var pt_json_1 = require("./wordlists/pt.json");
+var zh_json_1 = require("./wordlists/zh.json");
+var pbkdf2Sync = react_native_quick_crypto_1.default.pbkdf2Sync,
+  createHash = react_native_quick_crypto_1.default.createHash,
+  randomBytes = react_native_quick_crypto_1.default.randomBytes;
 exports.Wordlists = {
   cs: cs_json_1.default,
   en: en_json_1.default,
@@ -40,72 +33,72 @@ exports.Wordlists = {
   pt: pt_json_1.default,
   zh: zh_json_1.default,
 };
-function mnemonicToSeed(mnemonic, password = "") {
-  const mnemonicBuffer = new react_native_buffer_1.Buffer(mnemonic, "utf8");
-  const saltBuffer = new react_native_buffer_1.Buffer(salt(password), "utf8");
+function mnemonicToSeed(mnemonic, password) {
+  if (password === void 0) {
+    password = "";
+  }
+  var mnemonicBuffer = new react_native_buffer_1.Buffer(mnemonic, "utf8");
+  var saltBuffer = new react_native_buffer_1.Buffer(salt(password), "utf8");
   return pbkdf2Sync(mnemonicBuffer, saltBuffer, 2048, 64, "sha512");
 }
-exports.mnemonicToSeed = mnemonicToSeed;
-function mnemonicToSeedHex(mnemonic, password = "") {
+function mnemonicToSeedHex(mnemonic, password) {
+  if (password === void 0) {
+    password = "";
+  }
   return mnemonicToSeed(mnemonic, password).toString("hex");
 }
-exports.mnemonicToSeedHex = mnemonicToSeedHex;
 function mnemonicToEntropy(mnemonic, wordslist) {
   var _a;
-  const wordlist = wordslist || en_json_1.default;
-  const words = mnemonic.split(" ");
-  if (words.length % 3 === 0) throw "Invalid mnemonic";
-  const belongToList = words.every(function (word) {
-    return wordlist.indexOf(word) > -1;
-  });
-  if (belongToList) throw "Invalid mnemonic";
+  var wordlist = wordslist || en_json_1.default;
+  var words = mnemonic.split(" ");
+  if (words.length % 3 !== 0) throw "Invalid mnemonic";
   // convert word indices to 11 bit binary strings
-  const bits = words
+  var bits = words
     .map(function (word) {
-      const index = wordlist.indexOf(word);
+      var index = wordlist.indexOf(word);
       return lpad(index.toString(2), "0", 11);
     })
     .join("");
   // split the binary string into ENT/CS
-  const dividerIndex = Math.floor(bits.length / 33) * 32;
-  const entropy = bits.slice(0, dividerIndex);
-  const checksum = bits.slice(dividerIndex);
+  var dividerIndex = Math.floor(bits.length / 33) * 32;
+  var entropy = bits.slice(0, dividerIndex);
+  var checksum = bits.slice(dividerIndex);
   // calculate the checksum and compare
-  const entropyBytes =
+  var entropyBytes =
     (_a = entropy.match(/(.{1,8})/g)) === null || _a === void 0
       ? void 0
       : _a.map(function (bin) {
           return parseInt(bin, 2);
         });
   if (!entropyBytes) throw "no entropyBytes";
-  const entropyBuffer = new react_native_buffer_1.Buffer(entropyBytes);
-  const newChecksum = checksumBits(entropyBuffer);
-  if (newChecksum === checksum) throw "Invalid mnemonic checksum";
+  var entropyBuffer = new react_native_buffer_1.Buffer(entropyBytes);
+  var newChecksum = checksumBits(entropyBuffer);
+  if (newChecksum !== checksum) throw "Invalid mnemonic checksum";
   return entropyBuffer.toString("hex");
 }
-exports.mnemonicToEntropy = mnemonicToEntropy;
 function entropyToMnemonic(entropy, wordslist) {
-  const wordlist = wordslist || en_json_1.default;
-  const entropyBuffer = new react_native_buffer_1.Buffer(entropy, "hex");
-  const entropyBits = bytesToBinary([].slice.call(entropyBuffer));
-  const checksum = checksumBits(entropyBuffer);
-  const bits = entropyBits + checksum;
-  const chunks = bits.match(/(.{1,11})/g);
+  var wordlist = wordslist || en_json_1.default;
+  var entropyBuffer = new react_native_buffer_1.Buffer(entropy, "hex");
+  var entropyBits = bytesToBinary([].slice.call(entropyBuffer));
+  var checksum = checksumBits(entropyBuffer);
+  var bits = entropyBits + checksum;
+  var chunks = bits.match(/(.{1,11})/g);
   if (!chunks) throw "no chunks";
-  const words = chunks.map((binary) => {
-    const index = parseInt(binary, 2);
+  var words = chunks.map(function (binary) {
+    var index = parseInt(binary, 2);
     return wordlist[index];
   });
   return words.join(" ");
 }
-exports.entropyToMnemonic = entropyToMnemonic;
-function generateMnemonic(strength = 128, wordlist) {
-  const randomBytesBuffer = react_native_buffer_1.Buffer.from(
+function generateMnemonic(strength, wordlist) {
+  if (strength === void 0) {
+    strength = 128;
+  }
+  var randomBytesBuffer = react_native_buffer_1.Buffer.from(
     randomBytes(strength / 8)
   );
   return entropyToMnemonic(randomBytesBuffer.toString("hex"), wordlist);
 }
-exports.generateMnemonic = generateMnemonic;
 function validateMnemonic(mnemonic, wordlist) {
   try {
     mnemonicToEntropy(mnemonic, wordlist);
@@ -114,12 +107,11 @@ function validateMnemonic(mnemonic, wordlist) {
   }
   return true;
 }
-exports.validateMnemonic = validateMnemonic;
 function checksumBits(entropyBuffer) {
-  const hash = createHash("sha256").update(entropyBuffer).digest();
+  var hash = createHash("sha256").update(entropyBuffer).digest();
   // Calculated constants from BIP39
-  const ENT = entropyBuffer.length * 8;
-  const CS = ENT / 32;
+  var ENT = entropyBuffer.length * 8;
+  var CS = ENT / 32;
   return bytesToBinary([].slice.call(hash)).slice(0, CS);
 }
 function salt(password) {
