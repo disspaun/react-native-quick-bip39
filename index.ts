@@ -2,29 +2,7 @@ import unorm from "unorm";
 import crypto from "react-native-quick-crypto";
 import { Buffer } from "@craftzdog/react-native-buffer";
 
-import CS_WORDLIST from "./wordlists/cs.json";
-import EN_WORDLIST from "./wordlists/en.json";
-import ES_WORDLIST from "./wordlists/es.json";
-import FR_WORDLIST from "./wordlists/fr.json";
-import IT_WORDLIST from "./wordlists/it.json";
-import JA_WORDLIST from "./wordlists/ja.json";
-import KO_WORLDLIST from "./wordlists/ko.json";
-import PT_WORDLIST from "./wordlists/pt.json";
-import ZH_WORDLIST from "./wordlists/zh.json";
-
 const { pbkdf2Sync, createHash, randomBytes } = crypto;
-
-export const Wordlists = {
-  cs: CS_WORDLIST,
-  en: EN_WORDLIST,
-  es: ES_WORDLIST,
-  fr: FR_WORDLIST,
-  ja: JA_WORDLIST,
-  it: IT_WORDLIST,
-  ko: KO_WORLDLIST,
-  pt: PT_WORDLIST,
-  zh: ZH_WORDLIST,
-};
 
 export function mnemonicToSeed(
   mnemonic: string,
@@ -44,9 +22,9 @@ export function mnemonicToSeedHex(
 
 export function mnemonicToEntropy(
   mnemonic: string,
-  wordslist?: string[]
+  wordslist: string[]
 ): string {
-  const wordlist = wordslist || EN_WORDLIST;
+  const wordlist = wordslist;
 
   const words = mnemonic.split(" ");
   if (words.length % 3 !== 0) throw "Invalid mnemonic";
@@ -81,9 +59,9 @@ export function mnemonicToEntropy(
 
 export function entropyToMnemonic(
   entropy: string,
-  wordslist?: string[]
+  wordslist: string[]
 ): string {
-  const wordlist = wordslist || EN_WORDLIST;
+  const wordlist = wordslist;
 
   const entropyBuffer = new Buffer(entropy, "hex");
   const entropyBits = bytesToBinary([].slice.call(entropyBuffer));
