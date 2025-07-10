@@ -82,13 +82,13 @@ export function entropyToMnemonic(
 
 export function generateMnemonic(
   strength: number = 128,
-  wordlist?: any
+  wordlist: string[]
 ): string {
   const randomBytesBuffer = Buffer.from(randomBytes(strength / 8));
   return entropyToMnemonic(randomBytesBuffer.toString("hex"), wordlist);
 }
 
-export function validateMnemonic(mnemonic: string, wordlist?: any) {
+export function validateMnemonic(mnemonic: string, wordlist: string[]) {
   try {
     mnemonicToEntropy(mnemonic, wordlist);
   } catch (e) {
